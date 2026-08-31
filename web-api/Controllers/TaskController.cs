@@ -1,7 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using web_api.Data;
-using web_api.Models;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using web_api.Models.DTOs;
+using web_api.Services.Interfaces;
 
 namespace web_api.Controllers;
 
@@ -9,84 +10,53 @@ namespace web_api.Controllers;
 [Route("api/[controller]")]
 public class TasksController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly ITaskService _taskService;
 
-    public TasksController(AppDbContext context)
+    public TasksController(ITaskService taskService)
     {
-        _context = context;
+        _taskService = taskService;
     }
 
-    // GET: api/tasks (Get all tasks)
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<TaskItem>>> GetTasks()
+    public async Task<ActionResult<IEnumerable<TaskDto>>> GetTasks()
     {
-        return await _context.Tasks.ToListAsync();
+        var tasks = await _taskService.GetAllTasksAsync();
+        return Ok(tasks);
     }
 
-    // GET: api/tasks/1 (Get single task by ID)
     [HttpGet("{id}")]
-    public async Task<ActionResult<TaskItem>> GetTask(int id)
+    public async Task<ActionResult<TaskDto>> GetTask(int id)
     {
-        var task = await _context.Tasks.FindAsync(id);
-
-        if (task == null)
-        {
-            return NotFound();
-        }
-
-        return task;
+        var task = await _taskService.GetTaskByIdAsync(id);
+        if (task == null) return NotFound(new { message = $"Task with ID {id} not found." });
+        return Ok(task);
     }
 
-    // POST: api/tasks (Create a new task)
     [HttpPost]
-    public async Task<ActionResult<TaskItem>> CreateTask(TaskItem task)
+    public async Task<ActionResult<TaskDto>> CreateTask([FromBody] CreateTaskDto dto)
     {
-        task.CreatedAt = DateTime.UtcNow;
-        _context.Tasks.Add(task);
-        await _context.SaveChangesAsync();
+        if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        return CreatedAtAction(nameof(GetTask), new { id = task.Id }, task);
+        var created = await _taskService.CreateTaskAsync(dto);
+        return CreatedAtAction(nameof(GetTask), new { id = created.Id }, created);
     }
 
-    // PUT: api/tasks/1 (Update an existing task)
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateTask(int id, TaskItem task)
+    public async Task<IActionResult> UpdateTask(int id, [FromBody] UpdateTaskDto dto)
     {
-        if (id != task.Id)
-        {
-            return BadRequest();
-        }
+        if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        _context.Entry(task).State = EntityState.Modified;
-
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!_context.Tasks.Any(e => e.Id == id))
-            {
-                return NotFound();
-            }
-            throw;
-        }
+        var updated = await _taskService.UpdateTaskAsync(id, dto);
+        if (!updated) return NotFound(new { message = $"Task with ID {id} not found." });
 
         return NoContent();
     }
 
-    // DELETE: api/tasks/1 (Delete a task)
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteTask(int id)
     {
-        var task = await _context.Tasks.FindAsync(id);
-        if (task == null)
-        {
-            return NotFound();
-        }
-
-        _context.Tasks.Remove(task);
-        await _context.SaveChangesAsync();
+        var deleted = await _taskService.DeleteTaskAsync(id);
+        if (!deleted) return NotFound(new { message = $"Task with ID {id} not found." });
 
         return NoContent();
     }
