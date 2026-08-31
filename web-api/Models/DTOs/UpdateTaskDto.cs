@@ -21,4 +21,6 @@ public class UpdateTaskDto
     public string Priority { get; set; } = "Medium";
 
     public DateTime? DueDate { get; set; }
+
+    public int? ProjectId { get; set; }
 }

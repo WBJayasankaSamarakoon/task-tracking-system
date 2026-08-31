@@ -9,6 +9,6 @@ public class AppDbContext : DbContext
     {
     }
 
-    // Define a DbSet for the TaskItem model
-    public DbSet<TaskItem> Tasks { get; set; }
+    public DbSet<TaskItem> Tasks { get; set; } = null!;
+    public DbSet<Project> Projects { get; set; } = null!;
 }

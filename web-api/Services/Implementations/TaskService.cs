@@ -21,13 +21,21 @@ public class TaskService : ITaskService
 
     public async Task<IEnumerable<TaskDto>> GetAllTasksAsync()
     {
-        var tasks = await _context.Tasks.AsNoTracking().OrderByDescending(t => t.Id).ToListAsync();
+        var tasks = await _context.Tasks
+            .AsNoTracking()
+            .Include(t => t.Project)
+            .OrderByDescending(t => t.Id)
+            .ToListAsync();
+
         return tasks.Select(MapToDto);
     }
 
     public async Task<TaskDto?> GetTaskByIdAsync(int id)
     {
-        var task = await _context.Tasks.FindAsync(id);
+        var task = await _context.Tasks
+            .Include(t => t.Project)
+            .FirstOrDefaultAsync(t => t.Id == id);
+
         return task == null ? null : MapToDto(task);
     }
 
@@ -40,11 +48,17 @@ public class TaskService : ITaskService
             Status = dto.Status,
             Priority = dto.Priority,
             DueDate = dto.DueDate,
+            ProjectId = dto.ProjectId,
             CreatedAt = DateTime.UtcNow
         };
 
         _context.Tasks.Add(entity);
         await _context.SaveChangesAsync();
+
+        if (entity.ProjectId.HasValue)
+        {
+            await _context.Entry(entity).Reference(t => t.Project).LoadAsync();
+        }
 
         return MapToDto(entity);
     }
@@ -59,6 +73,7 @@ public class TaskService : ITaskService
         task.Status = dto.Status;
         task.Priority = dto.Priority;
         task.DueDate = dto.DueDate;
+        task.ProjectId = dto.ProjectId;
 
         await _context.SaveChangesAsync();
         return true;
@@ -89,7 +104,10 @@ public class TaskService : ITaskService
             Priority = item.Priority,
             DueDate = item.DueDate,
             CreatedAt = item.CreatedAt,
-            IsOverdue = isOverdue
+            IsOverdue = isOverdue,
+            ProjectId = item.ProjectId,
+            ProjectName = item.Project?.Name,
+            ProjectColor = item.Project?.ColorHex ?? "#5e6ad2"
         };
     }
 }

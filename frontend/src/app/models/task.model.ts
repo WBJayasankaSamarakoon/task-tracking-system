@@ -7,6 +7,9 @@ export interface TaskItem {
   dueDate?: string;
   createdAt?: string;
   isOverdue?: boolean;
+  projectId?: number;
+  projectName?: string;
+  projectColor?: string;
   projectTag?: string;
 }
 
@@ -16,6 +19,7 @@ export interface CreateTaskRequest {
   status: 'Pending' | 'In Progress' | 'Completed';
   priority: 'Low' | 'Medium' | 'High';
   dueDate?: string;
+  projectId?: number;
 }
 
 export interface UpdateTaskRequest {
@@ -24,4 +28,5 @@ export interface UpdateTaskRequest {
   status: 'Pending' | 'In Progress' | 'Completed';
   priority: 'Low' | 'Medium' | 'High';
   dueDate?: string;
+  projectId?: number;
 }

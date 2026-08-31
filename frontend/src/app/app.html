@@ -131,22 +131,38 @@
           </button>
         </nav>
 
-        <!-- Projects List -->
+        <!-- Dynamic Projects List Section -->
         <div class="px-2.5 mt-6 text-sm">
-          <div class="px-2.5 py-1 text-xs font-semibold text-gray-400 dark:text-[#6b7280] uppercase tracking-wider">Projects</div>
+          <div class="px-2.5 py-1 text-xs font-semibold text-gray-400 dark:text-[#6b7280] uppercase tracking-wider flex items-center justify-between">
+            <span>Projects</span>
+            <button 
+              (click)="openCreateProjectModal()" 
+              title="Add New Project"
+              class="text-xs text-gray-400 hover:text-gray-900 dark:hover:text-white p-0.5 rounded hover:bg-gray-200 dark:hover:bg-[#1c202a]">
+              +
+            </button>
+          </div>
+          
           <div class="space-y-1 mt-1">
-            <div class="px-3 py-2 rounded-lg hover:bg-white/60 dark:hover:bg-[#161a23] flex items-center gap-2.5 cursor-pointer text-gray-700 dark:text-[#9ca3af] font-medium">
-              <span class="w-2.5 h-2.5 rounded-full bg-[#5e6ad2]"></span>
-              <span>Frontend Core</span>
-            </div>
-            <div class="px-3 py-2 rounded-lg hover:bg-white/60 dark:hover:bg-[#161a23] flex items-center gap-2.5 cursor-pointer text-gray-700 dark:text-[#9ca3af] font-medium">
-              <span class="w-2.5 h-2.5 rounded-full bg-indigo-400"></span>
-              <span>Web API Services</span>
-            </div>
-            <div class="px-3 py-2 rounded-lg hover:bg-white/60 dark:hover:bg-[#161a23] flex items-center gap-2.5 cursor-pointer text-gray-700 dark:text-[#9ca3af] font-medium">
-              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-              <span>SQL Database</span>
-            </div>
+            @for (project of projects(); track project.id) {
+              <div 
+                (click)="selectProjectFilter(project.id!)"
+                [class.bg-white]="selectedProjectId() === project.id && !isDarkMode()"
+                [class.bg-[#1c202c]]="selectedProjectId() === project.id && isDarkMode()"
+                [class.text-gray-900]="selectedProjectId() === project.id && !isDarkMode()"
+                [class.text-white]="selectedProjectId() === project.id && isDarkMode()"
+                class="px-3 py-2 rounded-lg hover:bg-white/60 dark:hover:bg-[#161a23] flex items-center justify-between cursor-pointer text-gray-700 dark:text-[#9ca3af] font-medium transition-colors">
+                <div class="flex items-center gap-2.5 truncate">
+                  <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" [style.backgroundColor]="project.colorHex || '#5e6ad2'"></span>
+                  <span class="truncate">{{ project.name }}</span>
+                </div>
+                <span class="text-xs px-1.5 py-0.2 rounded-full font-mono bg-gray-200 dark:bg-[#151922] text-gray-500 dark:text-[#8b92a2]">{{ project.taskCount || 0 }}</span>
+              </div>
+            } @empty {
+              <div class="px-3 py-2 text-xs text-gray-400 dark:text-[#6b7280]">
+                No projects found.
+              </div>
+            }
           </div>
         </div>
       </div>
@@ -178,7 +194,13 @@
           <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-[#8b92a2]">
             <span>Workspace</span>
             <span class="text-gray-400">/</span>
-            <span class="text-gray-900 dark:text-white font-medium">Sprint Backlog</span>
+            <span class="text-gray-900 dark:text-white font-medium">
+              @if (selectedProjectId()) {
+                Filtered by Project
+              } @else {
+                All Tasks
+              }
+            </span>
           </div>
 
           <div class="h-5 w-px bg-gray-200 dark:bg-[#222836]"></div>
@@ -226,7 +248,7 @@
               type="text" 
               [ngModel]="searchQuery()" 
               (ngModelChange)="searchQuery.set($event)"
-              placeholder="Search or filter issues..." 
+              placeholder="Search tasks or projects..." 
               class="w-full h-9 pl-9 pr-8 bg-white dark:bg-[#141720] border border-gray-300 dark:border-[#222836] rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#6b7280] focus:outline-none focus:border-[#5e6ad2]"
             />
             <kbd class="text-[10px] bg-gray-100 dark:bg-[#1c202a] border border-gray-300 dark:border-[#2b3140] px-1.5 py-0.5 rounded text-gray-500 dark:text-[#8b92a2] absolute right-2.5 top-1/2 -translate-y-1/2">⌘K</kbd>
@@ -279,8 +301,21 @@
               <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
               <span class="text-sm font-medium">{{ errorMessage() }}</span>
             </div>
-            <button (click)="loadTasks()" class="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold rounded-md transition-colors">
+            <button (click)="loadData()" class="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold rounded-md transition-colors">
               Retry Connection
+            </button>
+          </div>
+        }
+
+        <!-- Active Filter Indicator (if filtered by project) -->
+        @if (selectedProjectId()) {
+          <div class="flex items-center justify-between px-4 py-2 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800/40 rounded-lg text-xs">
+            <div class="flex items-center gap-2 text-indigo-700 dark:text-indigo-300">
+              <span>Filtered by Project:</span>
+              <strong class="font-semibold">{{ filteredTasks()[0]?.projectName || 'Selected Project' }}</strong>
+            </div>
+            <button (click)="selectedProjectId.set(null)" class="text-indigo-600 dark:text-indigo-400 hover:underline font-semibold">
+              Clear Filter ✕
             </button>
           </div>
         }
@@ -335,6 +370,7 @@
               <div class="flex items-center gap-6 text-right">
                 <span class="w-28 text-center">Status</span>
                 <span class="w-24 text-center">Priority</span>
+                <span class="w-32 text-center">Project</span>
                 <span class="w-28 text-right">Due Date</span>
                 <span class="w-12 text-center">Actions</span>
               </div>
@@ -390,7 +426,7 @@
                     </div>
                   </div>
 
-                  <!-- Right: Status Pill + Priority + Date + Actions -->
+                  <!-- Right: Status Pill + Priority + Project + Date + Actions -->
                   <div class="flex items-center gap-6 text-sm">
                     
                     <!-- Status Badge -->
@@ -422,6 +458,18 @@
                       } @else {
                         <span class="w-2 h-2 rounded-full bg-gray-400"></span>
                         <span class="text-gray-500 font-medium text-xs">Low</span>
+                      }
+                    </div>
+
+                    <!-- Project Tag -->
+                    <div class="w-32 text-center">
+                      @if (task.projectName) {
+                        <span class="text-xs px-2.5 py-1 rounded-md bg-gray-100 dark:bg-[#161a24] text-gray-700 dark:text-[#818cf8] border border-gray-200 dark:border-[#272e3d] font-mono flex items-center justify-center gap-1.5 truncate">
+                          <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" [style.backgroundColor]="task.projectColor || '#5e6ad2'"></span>
+                          <span class="truncate">{{ task.projectName }}</span>
+                        </span>
+                      } @else {
+                        <span class="text-xs text-gray-400 dark:text-[#6b7280]">No Project</span>
                       }
                     </div>
 
@@ -483,8 +531,11 @@
                       <h4 class="text-sm font-semibold text-gray-900 dark:text-[#f3f4f6]">{{ task.title }}</h4>
                       <p class="text-xs text-gray-500 dark:text-[#8b92a2] mt-1.5 line-clamp-2">{{ task.description }}</p>
                       <div class="flex items-center justify-between mt-3.5 pt-2.5 border-t border-gray-100 dark:border-[#1c202a] text-xs">
-                        <button (click)="deleteTask(task.id)" class="text-gray-400 hover:text-rose-500">Delete</button>
-                        <button (click)="toggleTaskStatus(task)" class="text-amber-500 hover:underline font-semibold">Start →</button>
+                        <span class="text-xs text-gray-500 font-mono">{{ task.projectName || 'General' }}</span>
+                        <div class="flex items-center gap-2">
+                          <button (click)="deleteTask(task.id)" class="text-gray-400 hover:text-rose-500">Delete</button>
+                          <button (click)="toggleTaskStatus(task)" class="text-amber-500 hover:underline font-semibold">Start →</button>
+                        </div>
                       </div>
                     </div>
                   }
@@ -513,8 +564,11 @@
                       <h4 class="text-sm font-semibold text-gray-900 dark:text-[#f3f4f6]">{{ task.title }}</h4>
                       <p class="text-xs text-gray-500 dark:text-[#8b92a2] mt-1.5 line-clamp-2">{{ task.description }}</p>
                       <div class="flex items-center justify-between mt-3.5 pt-2.5 border-t border-gray-100 dark:border-[#1c202a] text-xs">
-                        <button (click)="deleteTask(task.id)" class="text-gray-400 hover:text-rose-500">Delete</button>
-                        <button (click)="toggleTaskStatus(task)" class="text-emerald-500 hover:underline font-semibold">Complete ✓</button>
+                        <span class="text-xs text-gray-500 font-mono">{{ task.projectName || 'General' }}</span>
+                        <div class="flex items-center gap-2">
+                          <button (click)="deleteTask(task.id)" class="text-gray-400 hover:text-rose-500">Delete</button>
+                          <button (click)="toggleTaskStatus(task)" class="text-emerald-500 hover:underline font-semibold">Complete ✓</button>
+                        </div>
                       </div>
                     </div>
                   }
@@ -542,8 +596,11 @@
                       </div>
                       <h4 class="text-sm font-semibold text-gray-500 dark:text-[#8b92a2] line-through">{{ task.title }}</h4>
                       <div class="flex items-center justify-between mt-3.5 pt-2.5 border-t border-gray-100 dark:border-[#1c202a] text-xs">
-                        <button (click)="deleteTask(task.id)" class="text-gray-400 hover:text-rose-500">Delete</button>
-                        <span class="text-emerald-500 font-mono font-bold">✓</span>
+                        <span class="text-xs text-gray-500 font-mono">{{ task.projectName || 'General' }}</span>
+                        <div class="flex items-center gap-2">
+                          <button (click)="deleteTask(task.id)" class="text-gray-400 hover:text-rose-500">Delete</button>
+                          <span class="text-emerald-500 font-mono font-bold">✓</span>
+                        </div>
                       </div>
                     </div>
                   }
@@ -631,13 +688,27 @@
               </div>
             </div>
 
-            <div>
-              <label class="block text-xs font-semibold text-gray-700 dark:text-[#8b92a2] uppercase tracking-wider mb-1.5">Due Date</label>
-              <input 
-                type="date" 
-                [(ngModel)]="newTask.dueDate" 
-                class="w-full h-10 px-3.5 bg-gray-50 dark:bg-[#0b0d11] border border-gray-300 dark:border-[#222836] rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-[#5e6ad2]"
-              />
+            <div class="grid grid-cols-2 gap-3.5">
+              <div>
+                <label class="block text-xs font-semibold text-gray-700 dark:text-[#8b92a2] uppercase tracking-wider mb-1.5">Assign Project</label>
+                <select 
+                  [(ngModel)]="newTask.projectId" 
+                  class="w-full h-10 px-3 bg-gray-50 dark:bg-[#0b0d11] border border-gray-300 dark:border-[#222836] rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-[#5e6ad2]">
+                  <option [ngValue]="null">No Project (General)</option>
+                  @for (project of projects(); track project.id) {
+                    <option [ngValue]="project.id">{{ project.name }}</option>
+                  }
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-gray-700 dark:text-[#8b92a2] uppercase tracking-wider mb-1.5">Due Date</label>
+                <input 
+                  type="date" 
+                  [(ngModel)]="newTask.dueDate" 
+                  class="w-full h-10 px-3.5 bg-gray-50 dark:bg-[#0b0d11] border border-gray-300 dark:border-[#222836] rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-[#5e6ad2]"
+                />
+              </div>
             </div>
 
           </div>
@@ -659,6 +730,89 @@
               } @else {
                 <span>Save Issue</span>
               }
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+    }
+
+    <!-- ========================================================================= -->
+    <!-- 4. CREATE PROJECT MODAL                                                    -->
+    <!-- ========================================================================= -->
+    @if (isCreateProjectModalOpen()) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+        
+        <div class="w-full max-w-md bg-white dark:bg-[#12151e] border border-gray-200 dark:border-[#222836] rounded-2xl shadow-2xl overflow-hidden">
+          
+          <!-- Modal Header -->
+          <div class="px-6 py-4 border-b border-gray-200 dark:border-[#1c202a] flex items-center justify-between bg-gray-50 dark:bg-[#151924]">
+            <div class="flex items-center gap-2.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              <h3 class="text-base font-semibold text-gray-900 dark:text-white">New Project</h3>
+            </div>
+            <button (click)="closeCreateProjectModal()" class="text-gray-400 hover:text-gray-900 dark:hover:text-white">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          <!-- Modal Error Banner -->
+          @if (projectModalError()) {
+            <div class="mx-6 mt-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-medium flex items-center gap-2">
+              <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span>{{ projectModalError() }}</span>
+            </div>
+          }
+
+          <!-- Modal Body -->
+          <div class="p-6 space-y-4">
+            
+            <div>
+              <label class="block text-xs font-semibold text-gray-700 dark:text-[#8b92a2] uppercase tracking-wider mb-1.5">Project Name *</label>
+              <input 
+                type="text" 
+                [(ngModel)]="newProject.name" 
+                placeholder="e.g. Mobile App, DevOps" 
+                class="w-full h-10 px-3.5 bg-gray-50 dark:bg-[#0b0d11] border border-gray-300 dark:border-[#222836] rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-[#5e6ad2]"
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-gray-700 dark:text-[#8b92a2] uppercase tracking-wider mb-1.5">Description</label>
+              <textarea 
+                [(ngModel)]="newProject.description" 
+                rows="2" 
+                placeholder="Brief summary of the project goals..." 
+                class="w-full p-3.5 bg-gray-50 dark:bg-[#0b0d11] border border-gray-300 dark:border-[#222836] rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-[#5e6ad2] resize-none"
+              ></textarea>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-gray-700 dark:text-[#8b92a2] uppercase tracking-wider mb-1.5">Project Color</label>
+              <div class="flex items-center gap-3">
+                <input 
+                  type="color" 
+                  [(ngModel)]="newProject.colorHex" 
+                  class="w-10 h-10 p-0.5 rounded-lg border border-gray-300 dark:border-[#222836] bg-transparent cursor-pointer"
+                />
+                <span class="text-xs font-mono text-gray-500 dark:text-[#8b92a2]">{{ newProject.colorHex }}</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Modal Footer -->
+          <div class="px-6 py-4 bg-gray-50 dark:bg-[#151924] border-t border-gray-200 dark:border-[#1c202a] flex items-center justify-end gap-3">
+            <button 
+              (click)="closeCreateProjectModal()" 
+              class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-[#8b92a2] hover:bg-gray-200 dark:hover:bg-[#1f2432]">
+              Cancel
+            </button>
+            <button 
+              (click)="saveProject()" 
+              class="px-5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-xs">
+              Create Project
             </button>
           </div>
 

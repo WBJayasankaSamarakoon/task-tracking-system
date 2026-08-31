@@ -12,4 +12,7 @@ public class TaskDto
     public DateTime? DueDate { get; set; }
     public DateTime CreatedAt { get; set; }
     public bool IsOverdue { get; set; }
+    public int? ProjectId { get; set; }
+    public string? ProjectName { get; set; }
+    public string? ProjectColor { get; set; }
 }
