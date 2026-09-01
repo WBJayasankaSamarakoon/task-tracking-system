@@ -1,5 +1,6 @@
 <img width="1360" height="601" alt="image" src="https://github.com/user-attachments/assets/de90d051-225a-4101-906d-c5e7d5969e48" />
-# 📋 Task Tracking System
+
+## 📋 Task Tracking System
 
 A full-stack web application to manage projects and tasks easily. It has a modern Kanban board, list view, user roles, and dark/light mode.
 
