@@ -24,6 +24,7 @@ public class TaskService : ITaskService
         var tasks = await _context.Tasks
             .AsNoTracking()
             .Include(t => t.Project)
+            .Include(t => t.AssignedToUser)
             .OrderByDescending(t => t.Id)
             .ToListAsync();
 
@@ -34,6 +35,7 @@ public class TaskService : ITaskService
     {
         var task = await _context.Tasks
             .Include(t => t.Project)
+            .Include(t => t.AssignedToUser)
             .FirstOrDefaultAsync(t => t.Id == id);
 
         return task == null ? null : MapToDto(task);
@@ -49,6 +51,7 @@ public class TaskService : ITaskService
             Priority = dto.Priority,
             DueDate = dto.DueDate,
             ProjectId = dto.ProjectId,
+            AssignedToUserId = dto.AssignedToUserId,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -58,6 +61,10 @@ public class TaskService : ITaskService
         if (entity.ProjectId.HasValue)
         {
             await _context.Entry(entity).Reference(t => t.Project).LoadAsync();
+        }
+        if (entity.AssignedToUserId.HasValue)
+        {
+            await _context.Entry(entity).Reference(t => t.AssignedToUser).LoadAsync();
         }
 
         return MapToDto(entity);
@@ -74,6 +81,7 @@ public class TaskService : ITaskService
         task.Priority = dto.Priority;
         task.DueDate = dto.DueDate;
         task.ProjectId = dto.ProjectId;
+        task.AssignedToUserId = dto.AssignedToUserId;
 
         await _context.SaveChangesAsync();
         return true;
@@ -107,7 +115,10 @@ public class TaskService : ITaskService
             IsOverdue = isOverdue,
             ProjectId = item.ProjectId,
             ProjectName = item.Project?.Name,
-            ProjectColor = item.Project?.ColorHex ?? "#5e6ad2"
+            ProjectColor = item.Project?.ColorHex ?? "#5e6ad2",
+            AssignedToUserId = item.AssignedToUserId,
+            AssignedToName = item.AssignedToUser?.FullName,
+            AssignedToRole = item.AssignedToUser?.Role
         };
     }
 }

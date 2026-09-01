@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -23,6 +23,7 @@ public class ProjectService : IProjectService
     {
         return await _context.Projects
             .AsNoTracking()
+            .OrderBy(p => p.Name)
             .Select(p => new ProjectDto
             {
                 Id = p.Id,
@@ -56,9 +57,16 @@ public class ProjectService : IProjectService
 
     public async Task<ProjectDto> CreateProjectAsync(CreateProjectDto dto)
     {
+        var trimmedName = dto.Name.Trim();
+        var exists = await _context.Projects.AnyAsync(p => p.Name.ToLower() == trimmedName.ToLower());
+        if (exists)
+        {
+            throw new InvalidOperationException($"A project named '{trimmedName}' already exists.");
+        }
+
         var entity = new Project
         {
-            Name = dto.Name.Trim(),
+            Name = trimmedName,
             Description = dto.Description?.Trim(),
             ColorHex = string.IsNullOrWhiteSpace(dto.ColorHex) ? "#5e6ad2" : dto.ColorHex.Trim(),
             CreatedAt = DateTime.UtcNow

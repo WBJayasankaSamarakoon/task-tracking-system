@@ -23,4 +23,6 @@ public class UpdateTaskDto
     public DateTime? DueDate { get; set; }
 
     public int? ProjectId { get; set; }
+
+    public int? AssignedToUserId { get; set; }
 }

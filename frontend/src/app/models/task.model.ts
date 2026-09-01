@@ -11,6 +11,9 @@ export interface TaskItem {
   projectName?: string;
   projectColor?: string;
   projectTag?: string;
+  assignedToUserId?: number | null;
+  assignedToName?: string;
+  assignedToRole?: string;
 }
 
 export interface CreateTaskRequest {
@@ -20,6 +23,9 @@ export interface CreateTaskRequest {
   priority: 'Low' | 'Medium' | 'High';
   dueDate?: string;
   projectId?: number;
+  assignedToUserId?: number | null;
+  assignedToName?: string;
+  assignedToRole?: string;
 }
 
 export interface UpdateTaskRequest {
@@ -29,4 +35,7 @@ export interface UpdateTaskRequest {
   priority: 'Low' | 'Medium' | 'High';
   dueDate?: string;
   projectId?: number;
+  assignedToUserId?: number | null;
+  assignedToName?: string;
+  assignedToRole?: string;
 }

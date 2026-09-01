@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using web_api.Models.DTOs;
@@ -35,10 +36,17 @@ public class ProjectsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ProjectDto>> CreateProject([FromBody] CreateProjectDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Name)) return BadRequest(new { message = "Project Name is required." });
+        if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        var created = await _projectService.CreateProjectAsync(dto);
-        return CreatedAtAction(nameof(GetProject), new { id = created.Id }, created);
+        try
+        {
+            var created = await _projectService.CreateProjectAsync(dto);
+            return CreatedAtAction(nameof(GetProject), new { id = created.Id }, created);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpDelete("{id}")]

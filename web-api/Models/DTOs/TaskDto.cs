@@ -15,4 +15,7 @@ public class TaskDto
     public int? ProjectId { get; set; }
     public string? ProjectName { get; set; }
     public string? ProjectColor { get; set; }
+    public int? AssignedToUserId { get; set; }
+    public string? AssignedToName { get; set; }
+    public string? AssignedToRole { get; set; }
 }
